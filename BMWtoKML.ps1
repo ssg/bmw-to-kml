@@ -1,0 +1,190 @@
+<#
+.SYNOPSIS
+Converts BMW Drive Recorder metadata into Google Earth KML file
+
+.DESCRIPTION
+This tool converts Metadata.json file included with the video
+recordings of BMW Driver Recorder software into a KML file that
+shows the path taken during driving and timestamps and mileage.
+
+.EXAMPLE
+.\BMWtoKML
+
+.PARAMETER InputJson
+Input JSON file name, by default "Metadata.json"
+
+.PARAMETER OutputKml
+Output KML file, by default "<event_date>.kml"
+
+.NOTES
+I initially created the barebones by Claude Sonnet 4.5 LLM then
+updated the heck out of it because it was inefficient and
+unnecessarily verbose.
+#>
+param(
+    [string]$InputJson = "Metadata.json",
+    [string]$OutputKml
+)
+
+$ErrorActionPreference = 'Stop'
+
+# Read and parse the JSON file
+Write-Host "Reading JSON file: $InputJson"
+$jsonContent = Get-Content -Path $InputJson -Raw | ConvertFrom-Json
+
+# entries are assumed to be sorted by ID, but if that ever
+# changes this also needs to be changed.
+$entries = $jsonContent.entries
+
+$count = $entries.Count
+
+if ($count -eq 0) {
+  Write-Host "No entries found - nothing to do"
+  exit 1
+}
+
+Write-Host "$count total entries in metadata"
+
+# BMW saves this field in US date format (mm/dd/yyyy)
+# but, I'm not sure if it uses that always or something else.
+# this part might need to be updated if there is a locale
+# mismatch between BMW and the system.
+$eventDate = [DateTime]$entries[0].date
+
+$eventDateStr = $($eventDate.ToString("yyyy-MM-dd"))
+
+if (!$OutputKml) {
+  # default to event_date.kml
+  $OutputKml = "$eventDateStr.kml"
+}
+
+$kmlHeader = @"
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Driving data on $eventDate</name>
+    <description>GPS path from BMW driver recorder</description>
+    
+    <!-- Style for the path line -->
+    <Style id="pathStyle">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>4</width>
+      </LineStyle>
+    </Style>
+    
+    <!-- Style for placemarks -->
+    <Style id="pointStyle">
+      <IconStyle>
+        <color>ff00ff00</color>
+        <scale>0.5</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    
+    <!-- Path LineString -->
+    <Placemark>
+      <name>Route</name>
+      <styleUrl>#pathStyle</styleUrl>
+      <LineString>
+        <extrude>0</extrude>
+        <tessellate>1</tessellate>
+        <altitudeMode>clampToGround</altitudeMode>
+        <coordinates>
+"@
+
+# Build coordinates string for the path - remove consecutive duplicates
+$coordinates = @()
+$lastLon = $null
+$lastLat = $null
+foreach ($entry in $entries) {
+    $lon = $entry.longitude
+    $lat = $entry.latitude
+    $alt = 0
+    
+    # Only add if coordinates are different from last point
+    if ($lon -ne $lastLon -or $lat -ne $lastLat) {
+        $coordinates += "          $lon,$lat,$alt"
+        $lastLon = $lon
+        $lastLat = $lat
+    }
+}
+
+Write-Host "Reduced to $($coordinates.Count) unique coordinate points from $($entries.Count) total entries"
+
+$coordinatesString = $coordinates -join "`n"
+
+$kmlMiddle = @"
+
+        </coordinates>
+      </LineString>
+    </Placemark>
+    
+    <!-- Individual Points with Speed and Time Data -->
+"@
+
+# Build placemarks for each point
+$placemarks = @()
+foreach ($entry in $entries) {
+    $id = $entry.id
+    $date = $entry.date
+    $time = $entry.time
+    $lat = $entry.latitude
+    $lon = $entry.longitude
+    $speedKmh = $entry.'velocity_KM/H'
+    $speedMph = $entry.'velocity_MP/H'
+    
+    $placemark = @"
+
+    <Placemark>
+      <name>$($time): $([int]$speedMph)mp/h</name>
+      <description><![CDATA[
+        <section style="display:flex; flex-shrink: 0; justify-content:space-between">
+            <section style="display:inline-block; margin-right: 40px">
+                <code>#$id</code>
+            </section>
+            <section style="display:inline-block;">
+                <code>$date $time</code>
+            </section>
+        </section>
+        <section style="display: inline-block; margin-right:40px; text-align:center">
+            <br />
+            <span style="font-size: 3em">$([int]$speedMph)</span>
+            <br />
+            mp/h
+        </section>
+        <section style="display: inline-block; ; text-align:center">
+            <br />
+            <span style="font-size: 3em">$([int]$speedKmh)</span>
+            <br />
+            km/h
+        </section>
+      ]]></description>
+      <styleUrl>#pointStyle</styleUrl>
+      <Point>
+        <coordinates>$lon,$lat,0</coordinates>
+      </Point>
+    </Placemark>
+"@
+    $placemarks += $placemark
+}
+
+$placemarksString = $placemarks -join ""
+
+$kmlFooter = @"
+
+  </Document>
+</kml>
+"@
+
+# Combine all parts
+$kmlContent = $kmlHeader + $coordinatesString + $kmlMiddle + $placemarksString + $kmlFooter
+
+# Write to output file
+Write-Host "Writing KML file: $OutputKml"
+$kmlContent | Out-File -FilePath $OutputKml -Encoding UTF8
+
+Write-Host "KML file created successfully!"
+Write-Host "You can open '$OutputKml' in Google Earth or any KML-compatible application."
