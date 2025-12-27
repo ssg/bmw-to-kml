@@ -46,9 +46,9 @@ if ($count -eq 0) {
 Write-Host "$count total entries in metadata"
 
 # BMW saves this field in US date format (mm/dd/yyyy)
-# but, I'm not sure if it uses that always or something else.
-# this part might need to be updated if there is a locale
-# mismatch between BMW and the system.
+# but, I'm not sure if that's always the case. this part might 
+# need to be updated if there is a locale mismatch between BMW 
+# and the system.
 $eventDate = [DateTime]$entries[0].date
 
 $eventDateStr = $($eventDate.ToString("yyyy-MM-dd"))
@@ -62,8 +62,8 @@ $kmlHeader = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
-    <name>Driving data on $eventDate</name>
-    <description>GPS path from BMW driver recorder</description>
+    <name>Driving on $eventDateStr</name>
+    <description>GPS path from BMW Drive Recorder</description>
     
     <!-- Style for the path line -->
     <Style id="pathStyle">
