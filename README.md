@@ -6,11 +6,18 @@ into Google Earth KML format so it can be inspected on [Google Earth](https://ea
 ## usage
 
 ```
-.\BMWtoKML -InputJson Metadata.json -OutputKml blabla.kml
+.\BMWtoKML -OutputKml somefilename.kml
 ```
 
-(InputJson parameter can be fully omitted as all JSON files are named "Metadata.json"
-with BMW driver recorder)
+Converts `Metadata.json` in the current directory into `somefilename.kml`.
+
+```
+.\BMWtoKML -InputJson PathToMetadata.json -OutputKml blabla.kml
+```
+
+Converts `Metadata.json` somewhere else into `blabla.kml`.
+
+(NOTE: BMW Drive Recorder names all JSON files `Metadata.json`)
 
 ## license
 GNU GPLv3. See [LICENSE](LICENSE) file for details.
