@@ -1,9 +1,14 @@
-# BMWtoKML
+# BMW to KML
 
-This is a PowerShell script that can convert BMW Drive Recorder Metadata.json files 
+This is both an interactive web page PWA app, and a PowerShell script that can convert BMW Drive Recorder Metadata.json files 
 into Google Earth KML format so it can be inspected on [Google Earth](https://earth.google.com) or other GIS software.
 
-## usage
+## interactive web page
+
+You can try it out at https://kod.ssg.dev/bmw-to-kml. You can also install
+it as a local PWA app if you plan on using it frequently.
+
+## PowerShell script usage
 
 ```
 .\BMWtoKML -OutputKml somefilename.kml

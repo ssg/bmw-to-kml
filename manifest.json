@@ -1,0 +1,29 @@
+{
+    "name": "BMW to KML Converter",
+    "short_name": "BMWtoKML",
+    "description": "Convert BMW Drive Recorder metadata to KML format",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#1a73e8",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='90' fill='%23667eea'/%3E%3Ctext x='100' y='130' font-size='100' text-anchor='middle' fill='white'%3E🚗%3C/text%3E%3C/svg%3E",
+            "sizes": "192x192",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='230' fill='%23667eea'/%3E%3Ctext x='256' y='350' font-size='280' text-anchor='middle' fill='white'%3E🚗%3C/text%3E%3C/svg%3E",
+            "sizes": "512x512",
+            "type": "image/svg+xml"
+        }
+    ],
+    "file_handlers": [
+        {
+            "action": "./index.html",
+            "accept": {
+                "application/json": [".json"]
+            }
+        }
+    ]
+}
