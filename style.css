@@ -15,6 +15,20 @@ body {
     padding: 20px;
 }
 
+footer {
+    padding-top: 10px;
+    color: #305563;
+}
+
+a {
+    color: #0c5460;
+}
+
+.information {
+    color: #888;
+    text-align: center;
+}
+
 .container {
     background: white;
     border-radius: 16px;
