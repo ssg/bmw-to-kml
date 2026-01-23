@@ -33,7 +33,7 @@ you can install it as a PWA and use it locally and offline.
     </div>
 
     <footer>
-        copyright (c) 2026 <a href="https://ssg.dev">sedat kapanoglu</a> 
+        v0.1.1 · copyright (c) 2026 <a href="https://ssg.dev">sedat kapanoglu</a> 
         · 
         <a href="https://github.com/ssg/bmw-to-kml">github</a>
     </footer>
@@ -83,6 +83,40 @@ you can install it as a PWA and use it locally and offline.
             }
         }
 
+        function parseDate(dateString) {
+            // try default parsing first
+            let timestamp = Date.parse(dateString);
+            if (!isNaN(timestamp)) {
+                return new Date(timestamp);
+            }            
+            
+            // Try common date formats
+            const formats = [
+                { regex: /^(\d{2})\/(\d{2})\/(\d{4})$/, order: [2, 0, 1] }, // MM/dd/yyyy - US
+                { regex: /^(\d{2})\.(\d{2})\.(\d{4})$/, order: [2, 1, 0] }, // dd.MM.yyyy - UK
+                { regex: /^(\d{2})\/(\d{2})\/(\d{4})$/, order: [2, 1, 0] }, // dd/MM/yyyy - EU
+                { regex: /^(\d{4})-(\d{2})-(\d{2})$/, order: [0, 1, 2] }   // yyyy-MM-dd - ISO
+            ];
+            
+            for (const format of formats) {
+                const match = dateString.match(format.regex);
+                if (match) {
+                    const parts = [match[1], match[2], match[3]];
+                    const year = parseInt(parts[format.order[0]], 10);
+                    const month = parseInt(parts[format.order[1]], 10) - 1; // Month is 0-indexed
+                    const day = parseInt(parts[format.order[2]], 10);
+                    const date = new Date(year, month, day);
+                    
+                    // Validate the date is not invalid
+                    if (!isNaN(date.getTime())) {
+                        return date;
+                    }
+                }
+            }
+            
+            return new Date();
+        }
+
         function handleFile(file) {
             if (!file.name.toLowerCase().endsWith('.json')) {
                 showStatus('Please select a JSON file', 'error');
@@ -123,7 +157,7 @@ you can install it as a PWA and use it locally and offline.
 
                 // Parse event date from first entry
                 const firstEntry = entries[0];
-                const eventDate = new Date(firstEntry.date);
+                const eventDate = parseDate(firstEntry.date);
                 const eventDateStr = eventDate.toISOString().split('T')[0];
 
                 // Generate KML

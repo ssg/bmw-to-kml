@@ -28,6 +28,42 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function parseDate($dateString) {
+    $eventDate = $null
+
+    # Try common date formats
+    $formats = @(
+        "MM/dd/yyyy",  # US format
+        "dd.MM.yyyy",  # European format with dots
+        "dd/MM/yyyy",  # European format with slashes
+        "yyyy-MM-dd"   # ISO format
+    )
+
+    foreach ($format in $formats) {
+        try {
+            $eventDate = [DateTime]::ParseExact($dateString, $format, [System.Globalization.CultureInfo]::InvariantCulture)
+            Write-Host "Successfully parsed date using format: $format"
+            return $eventDate
+        } catch {
+            # Continue to next format
+        }
+    }
+
+    # If all parsing attempts failed, try default parsing
+    if (-not $eventDate) {
+        try {
+            $eventDate = [DateTime]$dateString
+            Write-Host "Successfully parsed date using system default format"
+            return $eventDate
+        } catch {
+            # Fall back to current date
+            $eventDate = Get-Date
+            Write-Warning "Could not parse date '$dateString', using current date as fallback"
+            return $eventDate
+        }
+    }
+}
+
 # Read and parse the JSON file
 Write-Host "Reading JSON file: $InputJson"
 $jsonContent = Get-Content -Path $InputJson -Raw | ConvertFrom-Json
@@ -45,12 +81,9 @@ if ($count -eq 0) {
 
 Write-Host "$count total entries in metadata"
 
-# BMW saves this field in US date format (mm/dd/yyyy)
-# but, I'm not sure if that's always the case. this part might 
-# need to be updated if there is a locale mismatch between BMW 
-# and the system.
-$eventDate = [DateTime]$entries[0].date
-
+# Parse the event date
+$dateString = $entries[0].date
+$eventDate = parseDate $dateString
 $eventDateStr = $($eventDate.ToString("yyyy-MM-dd"))
 
 if (!$OutputKml) {
